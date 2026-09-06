@@ -7,6 +7,7 @@ from learning.bemt_traditional_fit.fitting_config import FittingConfig
 from learning.bemt_traditional_fit.objective import FittingObjective
 from learning.bemt_traditional_fit.single_rotor_model import SingleRotorBemtModel
 from learning.bemt_traditional_fit.single_rotor_objective import SingleRotorObjective
+from learning.bemt_traditional_fit.body_drag_objective import BodyDragObjective
 from learning.bemt_traditional_fit.fit_plotter import FitPlotter
 from learning.bemt_traditional_fit.fitting_engine import FittingEngine
 from learning.bemt_traditional_fit.seed_generator import MultiSeedGenerator, SingleSeedGenerator
@@ -51,6 +52,33 @@ class FittingManager:
         config = config or FittingConfig.from_yaml(_CONFIG_DIR / "config_full_vehicle.yaml")
         model = BemtModel(blade, params, model_config=config.model)
         objective = FittingObjective(model)
+        engine = _build_engine(model, objective, config)
+        return cls(model, engine, datasets, init_guess)
+
+    @classmethod
+    def for_body_drag(cls, blade, params, datasets: list[data_factory.FittingDataset],
+                      lookup_table, fixed_aero_params,
+                      init_guess=None, config: FittingConfig = None):
+        """Body-drag-only fitting given a fixed propeller map.
+
+        Aero coefficients (cl_1, cl_2, cd, alpha_0) are frozen via fixed_aero_params;
+        only k_body_drag is optimized. Thrust is computed via lookup_table.
+
+        Args:
+            fixed_aero_params: sequence (cl_1, cl_2, cd, alpha_0) from a prior single-rotor fit.
+            lookup_table: prepared PropellerLookupTable.Reader for thrust computation.
+            init_guess: optional initial k_body_drag scalar or 1-element array.
+        """
+        config = config or FittingConfig.from_yaml(_CONFIG_DIR / "config_body_drag.yaml")
+        model = BemtModel(blade, params, model_config=config.model)
+        cl_1, cl_2, cd, alpha_0 = fixed_aero_params
+        model.blade.cl_1 = cl_1
+        model.blade.cl_2 = cl_2
+        model.blade.cd = cd
+        model.blade.alpha_0 = alpha_0
+        model.bet_instance.refresh_blade()
+        model.configure_for_body_drag_fit()
+        objective = BodyDragObjective(model, lookup_table)
         engine = _build_engine(model, objective, config)
         return cls(model, engine, datasets, init_guess)
 

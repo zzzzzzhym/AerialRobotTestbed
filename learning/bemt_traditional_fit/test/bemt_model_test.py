@@ -71,5 +71,44 @@ class TestBemtModelMath(unittest.TestCase):
         self.assertLess(residual[2], 0.0)
 
 
+class TestConfigureForBodyDragFit(unittest.TestCase):
+
+    def _make_model(self):
+        from learning.bemt_traditional_fit.fitting_config import ModelConfig
+        model_config = ModelConfig(
+            coarse_n_elements=2, coarse_n_rotation_segments=6, coarse_sample_distance=100,
+            fine_n_elements=20, fine_n_rotation_segments=18, fine_sample_distance=20,
+        )
+        return BemtModel(APC_8x6(), parameters.PennStateARILab550(), model_config)
+
+    def test_bounds_becomes_one_dimensional(self):
+        model = self._make_model()
+        model.configure_for_body_drag_fit()
+        self.assertEqual(model.BOUNDS, [(0.0, 10.0)])
+
+    def test_parameter_names_becomes_k_body_drag_only(self):
+        model = self._make_model()
+        model.configure_for_body_drag_fit()
+        self.assertEqual(model.PARAMETER_NAMES, ("k_body_drag",))
+
+    def test_class_level_bounds_unchanged(self):
+        original_class_bounds = BemtModel.BOUNDS
+        model = self._make_model()
+        model.configure_for_body_drag_fit()
+        self.assertIs(BemtModel.BOUNDS, original_class_bounds)
+
+    def test_class_level_parameter_names_unchanged(self):
+        original_names = BemtModel.PARAMETER_NAMES
+        model = self._make_model()
+        model.configure_for_body_drag_fit()
+        self.assertIs(BemtModel.PARAMETER_NAMES, original_names)
+
+    def test_other_model_instance_unaffected(self):
+        model_a = self._make_model()
+        model_b = self._make_model()
+        model_a.configure_for_body_drag_fit()
+        self.assertEqual(model_b.BOUNDS, BemtModel.BOUNDS)
+
+
 if __name__ == "__main__":
     unittest.main()
