@@ -166,32 +166,36 @@ class BemtModel:
         f_inertial_frame = f_0 + f_1 + f_2 + f_3
         return f_inertial_frame
 
-    def compute_body_drag_force(self, v_i_avg: float, u_free_avg: np.ndarray, r_disk: np.ndarray) -> np.ndarray:
+    def compute_body_drag_force(self, v_i_avg: float, u_free_avg: np.ndarray, r_disk: np.ndarray,
+                                v_body: np.ndarray) -> np.ndarray:
         """Body aero drag along body-z from downwash hitting the drone frame.
 
-        Physical model: F_drag = k_body_drag * (v_i_avg + u_background_axial)^2 in the body-z direction.
+        Physical model: F_drag = k_body_drag * v_axial^2 in the body-z direction, where v_axial is
+        the total axial airspeed relative to the drone body in the downwash direction:
+            v_axial = v_i_avg + (u_free - v_body) projected onto -disk_z
         The force acts downward (in -disk_z direction), so the propellers must produce extra thrust to
         compensate. Returns the compensation term to add to f_gt (in inertial frame, along +disk_z).
 
         Args:
-            v_i_avg: disk-area-weighted average induced velocity, positive = downwash (m/s)
-            u_free_avg: background free-stream wind averaged over 4 rotors, inertial frame (m/s)
+            v_i_avg: average induced velocity, positive = downwash (m/s)
+            u_free_avg: environmental free-stream wind averaged over 4 rotors, inertial frame (m/s)
             r_disk: disk-to-inertial rotation matrix (columns = disk axes in inertial frame)
+            v_body: center-of-mass velocity in inertial frame (m/s)
         """
-        # axial wind component in downwash direction (-disk_z), positive = augments downwash
-        u_background_axial = -(r_disk.T @ u_free_avg)[2]
+        # relative wind on body = u_free - v_body; project onto downwash direction (-disk_z)
+        u_background_axial = -(r_disk.T @ (u_free_avg - v_body))[2]
         v_total = v_i_avg + u_background_axial
         disk_z_inertial = r_disk[:, 2]  # disk z-axis in inertial frame (thrust direction)
         return self.k_body_drag * v_total**2 * disk_z_inertial
 
-    def compute_residual_force(self, f_inertial_frame, a_groundtruth, v_i_avg=0.0, u_free_avg=None, r_disk=None):
+    def compute_residual_force(self, f_inertial_frame, a_groundtruth, v_i_avg=0.0, u_free_avg=None,
+                               r_disk=None, v_body=None):
         """Compute the residual force between the model thrust and the ground truth thrust.
         Assumes a_groundtruth is in the inertial frame (FLU).
         The residual is in the inertial frame (FLU).
         """
         f_gt_inertial_frame = -self.params.m * parameters.Environment.g*np.array([0.0, 0.0, -1.0]) + self.params.m * a_groundtruth
-        if self.k_body_drag != 0.0 and u_free_avg is not None and r_disk is not None:
-            f_gt_inertial_frame += self.compute_body_drag_force(v_i_avg, u_free_avg, r_disk)
+        f_gt_inertial_frame += self.compute_body_drag_force(v_i_avg, u_free_avg, r_disk, v_body)
         f_residual = f_inertial_frame - f_gt_inertial_frame
         return f_residual
 
@@ -200,13 +204,12 @@ class BemtModel:
         if is_using_lookup_table:
             f_inertial_frame = self.compute_total_force_inertial_frame_with_lookup_table(dataset, i, lookup_table)
             v_i_avg = self.compute_average_v_i(dataset, i, lookup_table)
-            u_free_avg = (dataset.u_free_0[i] + dataset.u_free_1[i] + dataset.u_free_2[i] + dataset.u_free_3[i]) / 4
-            r_disk = dataset.shared_r_disk[i]
         else:
             f_inertial_frame, v_i_avg = self.compute_total_force_inertial_frame(dataset, i)
-            u_free_avg = (dataset.u_free_0[i] + dataset.u_free_1[i] + dataset.u_free_2[i] + dataset.u_free_3[i]) / 4
-            r_disk = dataset.shared_r_disk[i]
-        f_residual = self.compute_residual_force(f_inertial_frame, dataset.dv[i], v_i_avg, u_free_avg, r_disk)
+        u_free_avg = (dataset.u_free_0[i] + dataset.u_free_1[i] + dataset.u_free_2[i] + dataset.u_free_3[i]) / 4
+        v_body = dataset.v_body[i]
+        r_disk = dataset.shared_r_disk[i]
+        f_residual = self.compute_residual_force(f_inertial_frame, dataset.dv[i], v_i_avg, u_free_avg, r_disk, v_body)
         if is_in_body_frame:
             f_residual = dataset.shared_r_disk[i].T @ f_residual
         return f_residual
