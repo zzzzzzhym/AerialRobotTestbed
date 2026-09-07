@@ -30,6 +30,10 @@ class FitPlotter:
             r_disk = dataset.shared_r_disk[i]
             if is_using_lookup_table:
                 f_total_inertial = model.compute_total_force_inertial_frame_with_lookup_table(dataset, i, lookup_table)
+                v_i_avg = model.compute_average_v_i(dataset, i, lookup_table)
+                u_free_avg = (dataset.u_free_0[i] + dataset.u_free_1[i] + dataset.u_free_2[i] + dataset.u_free_3[i]) / 4
+                f_body_drag = model.compute_body_drag_force(v_i_avg, u_free_avg, r_disk, dataset.v_body[i])
+                f_total_inertial = f_total_inertial - f_body_drag
                 # Per-rotor forces in body frame (convert from inertial)
                 f0 = r_disk.T @ BemtModel.compute_thrust_with_lookup_table(dataset.u_free_0[i], dataset.v_forward_0[i], r_disk, dataset.omega_0[i], model.params.is_ccw_blade[0], lookup_table)
                 f1 = r_disk.T @ BemtModel.compute_thrust_with_lookup_table(dataset.u_free_1[i], dataset.v_forward_1[i], r_disk, dataset.omega_1[i], model.params.is_ccw_blade[1], lookup_table)
