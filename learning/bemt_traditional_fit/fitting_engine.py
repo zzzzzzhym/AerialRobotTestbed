@@ -67,6 +67,7 @@ class FittingEngine:
         self.model.adjust_resolution(is_fine_tune=True)
         fine_result = self.fine_solver.run(lambda x: self.objective.get_loss(x, datasets), best_coarse.x_physical)
         self._print_result("Final result", fine_result.fun, fine_result.x_physical)
+        self.model.apply_params(fine_result.x_physical)
         return fine_result.x_physical
 
     def fit_single(self, datasets: list[data_factory.FittingDataset],
@@ -90,6 +91,7 @@ class FittingEngine:
         fitted_params = result.x_physical
         if result.success:
             print("Fitted parameters: " + self._format_parameters(fitted_params))
+            self.model.apply_params(fitted_params)
             return fitted_params
         else:
             print("Optimization failed:", result.message)

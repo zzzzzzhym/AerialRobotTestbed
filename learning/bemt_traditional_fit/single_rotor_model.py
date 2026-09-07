@@ -34,6 +34,10 @@ class SingleRotorBemtModel:
         self.sample_distance = None
         self.adjust_resolution(is_fine_tune=False)
 
+    def apply_params(self, x):
+        self.blade.cl_1, self.blade.cl_2, self.blade.cd, self.blade.alpha_0 = x[:4]
+        self.bet_instance.refresh_blade()
+
     def adjust_resolution(self, is_fine_tune: bool):
         if is_fine_tune:
             self.sample_distance = self.model_config.fine_sample_distance

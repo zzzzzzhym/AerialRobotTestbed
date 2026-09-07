@@ -233,15 +233,23 @@ class BemtModel:
         _, v_i = lookup_table.get_rotor_forces(u_free, v_forward, r_disk, omega, is_ccw_blade)
         return v_i
 
+    def apply_params(self, x):
+        self.blade.cl_1, self.blade.cl_2, self.blade.cd, self.blade.alpha_0, self.k_body_drag = x
+        self.bet_instance.refresh_blade()
+
+    def _apply_params_body_drag_only(self, x):
+        self.k_body_drag = x[0]
+
     def configure_for_body_drag_fit(self):
         """Switch this model instance to 1-D body-drag-only fitting mode.
 
-        Overrides BOUNDS and PARAMETER_NAMES at the instance level so that
+        Overrides BOUNDS, PARAMETER_NAMES, and apply_params at the instance level so that
         the solver and engine treat k_body_drag as the sole decision variable.
         Call this after fixing blade aero coefficients from a prior single-rotor fit.
         """
         self.BOUNDS = [(0.0, 10.0)]
         self.PARAMETER_NAMES = ("k_body_drag",)
+        self.apply_params = self._apply_params_body_drag_only
 
     def compute_ground_truth(self, dataset):
         f_total_inertial_frame_gt = [

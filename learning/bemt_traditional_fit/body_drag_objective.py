@@ -15,7 +15,7 @@ class BodyDragObjective:
         self.lookup_table = lookup_table
 
     def get_loss(self, x, datasets: list[data_factory.FittingDataset]) -> float:
-        self.model.k_body_drag = x[0]
+        self.model.apply_params(x)
 
         loss = 0.0
         for dataset in datasets:

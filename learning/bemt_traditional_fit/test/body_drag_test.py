@@ -36,6 +36,7 @@ class TestBodyDragObjectiveGetLoss(unittest.TestCase):
 
     def setUp(self):
         self.model = _make_model()
+        self.model.configure_for_body_drag_fit()
         self.lookup_table = MagicMock()
         self.objective = BodyDragObjective(self.model, self.lookup_table)
 
