@@ -110,8 +110,15 @@ class FittingManager:
         return self.engine.fit_single(self.datasets, seed_generator=seed_gen, is_fine_tune=is_fine_tune)
 
     def plot(self, dataset_idx: int = 0, lookup_table=None, is_using_lookup_table: bool = False,
-             sample_step: int = 1):
-        """Plot fit vs ground truth for one dataset (full-vehicle model only)."""
+             sample_step: int = 1, params=None):
+        """Plot fit vs ground truth for one dataset (full-vehicle model only).
+
+        Args:
+            params: optional parameter vector to apply before plotting; if None, uses
+                    whatever is currently set on the model (e.g. from a prior run()).
+        """
+        if params is not None:
+            self.model.apply_params(params)
         return FitPlotter.plot_the_fit(
             self.model,
             self.datasets[dataset_idx],
