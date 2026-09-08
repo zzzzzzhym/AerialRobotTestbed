@@ -619,22 +619,22 @@ class Plotter:
         force_line_width = [line_width_base + (4-i) * line_width_gap for i in range(4)]
         for i in range(4):
             axs[0].plot(
-                self.t_span, 
-                logger["f_motor_desired"][:, i], 
-                label=f"Rotor {i} desired thrust", 
-                linestyle='-', 
-                linewidth=force_line_width[i], 
-                color=force_colors[i], 
-                zorder=3+i  # ensure later lines go on top
+                self.t_span,
+                logger["f_motor_desired"][:, i],
+                label=f"Rotor {i} desired thrust",
+                linestyle='--',
+                linewidth=force_line_width[i],
+                color=force_colors[i],
+                zorder=3+i
             )
             axs[0].plot(
-                self.t_span, 
-                logger[f"rotor_{i}_thrust"], 
-                label=f"Rotor {i} actual thrust", 
-                linestyle='--', 
-                linewidth=force_line_width[i], 
-                color=force_colors[i], 
-                zorder=3+i  # ensure later lines go on top
+                self.t_span,
+                logger[f"rotor_{i}_thrust"],
+                label=f"Rotor {i} actual thrust",
+                linestyle='-',
+                linewidth=force_line_width[i],
+                color=force_colors[i],
+                zorder=3+i
             )
         axs[0].set_ylabel("Rotor Forces")
         axs[0].legend(loc='upper right')
@@ -642,33 +642,33 @@ class Plotter:
         # === Rotor Speed Plot ===
         speed_colors = force_colors
         speed_line_width = force_line_width
-        delay_styles = ['--', '--', '--', '--']  # dashed for delayed
         for i in range(4):
             axs[1].plot(
-                self.t_span, 
-                logger[f"rotor_{i}_rotation_spd"], 
-                label=f"Rotor {i} Speed", 
-                color=speed_colors[i], 
-                linestyle='-', 
-                linewidth=speed_line_width[i], 
+                self.t_span,
+                logger[f"rotor_{i}_rotation_spd"],
+                label=f"Rotor {i} Speed",
+                color=speed_colors[i],
+                linestyle='-',
+                linewidth=speed_line_width[i],
                 zorder=3*i
             )
+            if f"rotor_{i}_rotation_spd_delayed" in logger:
+                axs[1].plot(
+                    self.t_span,
+                    logger[f"rotor_{i}_rotation_spd_delayed"],
+                    label=f"Rotor {i} Speed delayed",
+                    color=speed_colors[i],
+                    linestyle=':',
+                    linewidth=speed_line_width[i],
+                    zorder=3*i + 1
+                )
             axs[1].plot(
-                self.t_span, 
-                logger[f"rotor_{i}_rotation_spd_delayed"], 
-                label=f"Rotor {i} Speed delayed", 
-                color=speed_colors[i], 
-                linestyle=delay_styles[i], 
-                linewidth=speed_line_width[i], 
-                zorder=3*i + 1
-            )
-            axs[1].plot(
-                self.t_span, 
-                logger[f"rotor_speeds_desired"][:, i], 
-                label=f"Desired Rotor {i} Speed", 
-                color=speed_colors[i], 
-                linestyle=delay_styles[i], 
-                linewidth=speed_line_width[i], 
+                self.t_span,
+                logger[f"rotor_speeds_desired"][:, i],
+                label=f"Desired Rotor {i} Speed",
+                color=speed_colors[i],
+                linestyle='--',
+                linewidth=speed_line_width[i],
                 zorder=3*i + 2
             )
 
