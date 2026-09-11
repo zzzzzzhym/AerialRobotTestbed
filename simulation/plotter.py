@@ -504,6 +504,8 @@ class Plotter:
         axs1[2, 8].plot(self.t_span, logger["pose_desired_dot2"][:, 2, 2], marker='x', label="pose_desired_dot2[2, 2]")
 
     def plot_disturbance_force(self, logger: np.ndarray):
+        if logger["f_disturb"].size == 0:
+            return
         fig, axs = plt.subplots(4, 2, sharex=True)
         fig.suptitle('disturbance')
         f_norm = np.sqrt(
@@ -652,7 +654,7 @@ class Plotter:
                 linewidth=speed_line_width[i],
                 zorder=3*i
             )
-            if f"rotor_{i}_rotation_spd_delayed" in logger:
+            if logger[f"rotor_{i}_rotation_spd_delayed"].size > 0:
                 axs[1].plot(
                     self.t_span,
                     logger[f"rotor_{i}_rotation_spd_delayed"],
@@ -737,6 +739,8 @@ class Plotter:
         axs9.axis('equal')
 
     def plot_2d_xz_yz_trace(self, logger: np.ndarray, wall_x: float = 0.0, is_figure8=True):
+        if logger["tip_position"].size == 0 or logger["f_contact_normal"].size == 0:
+            return
 
         plt.rcParams["font.family"] = "serif"
         plt.rcParams["font.serif"] = ["Times New Roman"]
@@ -794,6 +798,8 @@ class Plotter:
         ax1.set_aspect('equal', adjustable='box')
 
     def plot_contact_force(self, logger: np.ndarray):
+        if logger["f_contact_normal"].size == 0:
+            return
         f = logger["f_contact_normal"]
         f_mag = np.linalg.norm(f, axis=1)
 
