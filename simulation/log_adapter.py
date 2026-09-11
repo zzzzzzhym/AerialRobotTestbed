@@ -32,6 +32,13 @@ def log_data_from_dynamics(output: interface.DynamicsOutput) -> dict:
     return data
 
 
+def log_data_from_perception(perception: interface.ExtendedWorldPerception) -> dict:
+    return {
+        "f_contact_normal": perception.contact_force.copy(),
+        "tip_position":     perception.tip_position.copy(),
+    }
+
+
 def log_data_from_disturbance(disturbance) -> dict:
     if hasattr(disturbance, 'get_log_data'):
         return disturbance.get_log_data()

@@ -260,7 +260,7 @@ class P600(simulation.scenario.Dynamics):
 
     def save_extended_world_perception(self, reply):
         self.contact_force = simulation.interface.ExtendedWorldPerception(
-            contact_force=self.get_end_effector_force(reply),
+            contact_force=self.state.pose @ self.get_end_effector_force(reply),
             tip_position=self.state.get_position_in("inertial"))    # temporary solution, should change back to tip
 
     def get_dynamics_output(self) -> simulation.interface.DynamicsOutput:

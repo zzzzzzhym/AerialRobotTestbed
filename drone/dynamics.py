@@ -186,10 +186,10 @@ class DroneDynamics(simulation.scenario.Dynamics):
         contact_force = np.zeros(3)
         tip_position = np.zeros(3)
         if hasattr(self.disturbance, 'wall_contact'):
-            contact_force = self.state.pose.T @ self.disturbance.wall_contact.f_contact_normal
+            contact_force = self.disturbance.wall_contact.f_contact_normal
             tip_position = self.disturbance.wall_contact.tip_position_inertial_frame
         elif hasattr(self.disturbance, 'f_contact_normal'):
-            contact_force = self.state.pose.T @ self.disturbance.f_contact_normal
+            contact_force = self.disturbance.f_contact_normal
             tip_position = self.disturbance.tip_position_inertial_frame
         return simulation.interface.ExtendedWorldPerception(contact_force, tip_position)
 

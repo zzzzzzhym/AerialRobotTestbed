@@ -1,7 +1,6 @@
 import numpy as np
 import sim_logger
 import scenario
-import interface
 import log_adapter
 
 class Engine:
@@ -46,7 +45,8 @@ class Engine:
         dynamics_output = self.scenario.dynamics.get_dynamics_output()
         self._append_log(logger, log_adapter.log_data_from_sensor(sensor_data))
         self._append_log(logger, log_adapter.log_data_from_dynamics(dynamics_output))
-        self.log_extended_world_perception(logger, self.scenario.dynamics.get_extended_world_perception())
+        self._append_log(logger, log_adapter.log_data_from_perception(
+            self.scenario.dynamics.get_extended_world_perception()))
 
     def run_simulation(self, logger: sim_logger.Logger, t_end):
         self.t_span = np.arange(0.0, t_end + self.dt_log, self.dt_log)
@@ -57,10 +57,6 @@ class Engine:
 
     def shutdown(self):
         self.scenario.dynamics.shutdown()
-
-    def log_extended_world_perception(self, logger: sim_logger.Logger, perception: interface.ExtendedWorldPerception):
-        logger.buffer["f_contact_normal"].append(logger.buffer["pose"][-1] @ perception.contact_force.copy())
-        logger.buffer["tip_position"].append(perception.tip_position.copy())
 
     def _append_log(self, logger: sim_logger.Logger, data: dict):
         for key, val in data.items():
